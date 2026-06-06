@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      ==========================================================================
+      PARENT: spring-boot-starter-parent
+      ==========================================================================
+      Heredar de este "parent" es la forma estándar de iniciar un proyecto Spring
+      Boot. Nos da, sin que tengamos que pensarlo:
+        - Versiones coordinadas de TODAS las dependencias (BOM): así no tengo que
+          escribir <version> en cada starter; el parent garantiza que las
+          versiones sean compatibles entre sí. Esto evita el "JAR hell".
+        - Configuración por defecto de plugins (compilador, jar, tests).
+      Uso la 3.3.x porque es Spring Boot 3 (requiere Java 17+, yo uso Java 21).
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/> <!-- vacío: lo descarga del repositorio, no busca un parent local -->
+    </parent>
+
+    <!-- Coordenadas únicas de MI artefacto (cómo se identifica en Maven). -->
+    <groupId>com.smart</groupId>
+    <artifactId>reto-inventario</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>reto-inventario</name>
+    <description>Backend del reto tecnico full stack (Spring Boot + Quasar)</description>
+
+    <properties>
+        <!--
+          Fijo Java 21 para TODO el proyecto. Spring Boot usa esta propiedad para
+          decirle al compilador qué nivel de lenguaje y bytecode generar.
+        -->
+        <java.version>21</java.version>
+        <!--
+          Versiones de dependencias que NO vienen en el BOM del parent y debo
+          fijar yo. Las pongo aquí como propiedades para tenerlas centralizadas.
+        -->
+        <jjwt.version>0.12.6</jjwt.version>
+        <springdoc.version>2.6.0</springdoc.version>
+        <openpdf.version>2.0.3</openpdf.version>
+    </properties>
+
+    <dependencies>
+
+        <!--
+          ====================================================================
+          WEB: spring-boot-starter-web
+          ====================================================================
+          Trae todo para construir una API REST: Spring MVC, el servidor Tomcat
+          embebido (por eso NO necesito instalar un servidor aparte), y Jackson
+          para convertir objetos Java <-> JSON automáticamente.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!--
+          ====================================================================
+          PERSISTENCIA: spring-boot-starter-data-jpa
+          ====================================================================
+          Trae JPA + Hibernate (el ORM) + el manejo de transacciones. Con esto
+          mapeo clases Java a tablas y obtengo repositorios casi sin código.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!--
+          ====================================================================
+          VALIDACIÓN: spring-boot-starter-validation
+          ====================================================================
+          Habilita Bean Validation (anotaciones como @NotBlank, @Email, @Positive)
+          para validar los DTOs de entrada de forma declarativa. Sin esto, las
+          anotaciones @Valid no harían nada.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!--
+          ====================================================================
+          SEGURIDAD: spring-boot-starter-security
+          ====================================================================
+          Trae Spring Security: filtros de autenticación/autorización, el
+          codificador BCrypt para contraseñas y el control de acceso por rol.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!--
+          ====================================================================
+          OBSERVABILIDAD: spring-boot-starter-actuator
+          ====================================================================
+          Expone endpoints de salud y métricas (/actuator/health). Útil para el
+          health check de AWS Elastic Beanstalk y para la demo.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+          ====================================================================
+          DRIVER POSTGRESQL
+          ====================================================================
+          El driver JDBC para hablar con PostgreSQL. 'runtime' porque solo se
+          necesita al ejecutar, no al compilar (mi código no importa clases del
+          driver directamente).
+        -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--
+          ====================================================================
+          FLYWAY: migraciones de base de datos versionadas
+          ====================================================================
+          flyway-core ejecuta los scripts SQL de migración al arrancar.
+          flyway-database-postgresql es el módulo específico que Flyway 10+ exige
+          para PostgreSQL (antes venía incluido; ahora se separó).
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!--
+          ====================================================================
+          JWT: jjwt (Java JWT, de la librería io.jsonwebtoken)
+          ====================================================================
+          Genera y valida los tokens JWT. Se divide en 3 artefactos:
+            - jjwt-api: las interfaces que uso en mi código.
+            - jjwt-impl: la implementación (en runtime).
+            - jjwt-jackson: para serializar el contenido del token a JSON.
+          Separar api/impl es buena práctica: mi código depende solo de la API.
+        -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--
+          ====================================================================
+          OPENAPI / SWAGGER: springdoc-openapi
+          ====================================================================
+          Genera automáticamente la documentación OpenAPI y la interfaz Swagger UI
+          (en /swagger-ui.html) leyendo mis controladores. Cero configuración para
+          lo básico.
+        -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <!--
+          ====================================================================
+          PDF: OpenPDF
+          ====================================================================
+          Librería para generar el PDF del inventario. Elijo OpenPDF (fork libre
+          de iText 4) porque tiene licencia LGPL/MPL (sin costo, a diferencia de
+          iText 7 que es AGPL/comercial) y una API sencilla para tablas.
+        -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>${openpdf.version}</version>
+        </dependency>
+
+        <!--
+          ====================================================================
+          LOMBOK
+          ====================================================================
+          Genera getters/setters/constructores en tiempo de compilación para
+          reducir código repetitivo en las entidades. 'optional=true' para que no
+          se propague como dependencia transitiva a quien use mi artefacto.
+          OJO: en entidades NO uso @Data (genera equals/hashCode peligrosos con
+          relaciones JPA); uso solo @Getter/@Setter.
+        -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!--
+          ====================================================================
+          PRUEBAS: spring-boot-starter-test
+          ====================================================================
+          Trae JUnit 5, Mockito, AssertJ y utilidades de Spring para tests.
+          'test' scope: solo disponible al compilar/ejecutar pruebas.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Utilidades de testing específicas de Spring Security (ej. simular usuarios). -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+              spring-boot-maven-plugin: empaqueta el "fat JAR" ejecutable (con
+              Tomcat y todas las dependencias dentro) y permite 'mvn spring-boot:run'.
+              Le indico el path de Lombok como annotation processor para que el
+              compilador lo procese y luego lo EXCLUYA del JAR final (no se necesita
+              en runtime).
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
