@@ -1,0 +1,7 @@
+# Dependencias y artefactos de build de Quasar/Node
+node_modules
+.quasar
+/dist
+*.log
+.env.local
+.DS_Store
