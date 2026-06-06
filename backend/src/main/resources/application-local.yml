@@ -1,0 +1,36 @@
+# =============================================================================
+# PERFIL LOCAL — desarrollo en mi máquina Windows con PostgreSQL nativo
+# =============================================================================
+# Se activa por defecto (ver application.yml -> spring.profiles.default: local).
+
+spring:
+  datasource:
+    # URL JDBC de la base de DESARROLLO. Formato:
+    #   jdbc:postgresql://<host>:<puerto>/<basededatos>
+    url: jdbc:postgresql://localhost:5432/reto_dev
+    username: reto_user
+    # En local no me preocupa tener la contraseña aquí porque es una BD local de
+    # desarrollo. Aun así permito sobreescribir por variable de entorno.
+    password: ${DB_PASSWORD:reto_pass}
+
+  jpa:
+    hibernate:
+      # validate: Hibernate NO modifica el esquema; solo verifica que las entidades
+      # coincidan con las tablas que creó Flyway. Si algo no cuadra, falla al
+      # arrancar. Es la opción correcta cuando Flyway es el dueño del esquema.
+      ddl-auto: validate
+    # Muestro el SQL en consola para aprender qué genera Hibernate.
+    show-sql: true
+
+# Logs más verbosos en desarrollo para depurar.
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# CORS: en local el frontend Quasar corre en http://localhost:9000 (puerto por
+# defecto de 'quasar dev'). Permito ese origen para que el navegador no bloquee
+# las peticiones. Lo leo en la configuración de seguridad.
+app:
+  cors:
+    allowed-origins: http://localhost:9000

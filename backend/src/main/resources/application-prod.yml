@@ -1,0 +1,45 @@
+# =============================================================================
+# PERFIL PROD — despliegue en AWS (Elastic Beanstalk + RDS)
+# =============================================================================
+# Se activa con SPRING_PROFILES_ACTIVE=prod (variable de entorno en Beanstalk).
+# REGLA DE ORO: aquí NO hay ningún secreto en texto plano. TODO viene de variables
+# de entorno que en AWS se inyectan desde Parameter Store / Secrets Manager.
+
+spring:
+  datasource:
+    # Estas variables las define Beanstalk a partir de los secretos de AWS.
+    # La sintaxis ${VARIABLE} sin valor por defecto significa: "es obligatoria;
+    # si falta, la app NO arranca" (lo cual es deseable en prod: fallar rápido).
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      # En producción JAMÁS dejo que Hibernate toque el esquema: solo valida.
+      ddl-auto: validate
+    show-sql: false
+
+  flyway:
+    # Nunca permitir limpiar la base en producción.
+    clean-disabled: true
+
+# Logs en nivel INFO: en prod no quiero el ruido de DEBUG, y CloudWatch los recoge.
+logging:
+  level:
+    root: INFO
+
+app:
+  jwt:
+    # Obligatorio por variable de entorno. Sin default: si falta, no arranca.
+    secret: ${APP_JWT_SECRET}
+  email:
+    # En prod el correo es real: usa el adaptador REST contra el proveedor externo.
+    modo: rest
+    remitente: ${APP_EMAIL_REMITENTE}
+    # URL y API key del proveedor de email (SendGrid/Resend/SES vía REST).
+    api-url: ${APP_EMAIL_API_URL}
+    api-key: ${APP_EMAIL_API_KEY}
+  cors:
+    # El dominio del frontend en CloudFront. Se inyecta como variable.
+    allowed-origins: ${APP_CORS_ORIGINS}

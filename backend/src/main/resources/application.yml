@@ -1,0 +1,68 @@
+# =============================================================================
+# CONFIGURACIÓN COMÚN (se aplica a todos los perfiles)
+# =============================================================================
+# Spring Boot lee este archivo siempre, y luego SOBREESCRIBE con el archivo del
+# perfil activo (application-local.yml, -test.yml o -prod.yml).
+# El perfil activo se elige con la variable de entorno SPRING_PROFILES_ACTIVE
+# o con el parámetro --spring.profiles.active=local
+
+spring:
+  application:
+    name: reto-inventario
+
+  # Perfil por defecto si no se especifica ninguno: 'local'.
+  profiles:
+    default: local
+
+  jpa:
+    # open-in-view=false: DESACTIVO el patrón "Open Session In View".
+    # Por defecto Spring lo deja en true, lo que mantiene la sesión de Hibernate
+    # abierta durante toda la petición HTTP. Eso oculta problemas de lazy-loading
+    # y puede degradar el rendimiento. Apagarlo me obliga a cargar bien los datos
+    # dentro de la capa @Transactional (buena práctica).
+    open-in-view: false
+    properties:
+      hibernate:
+        # Formatea el SQL en los logs para poder leerlo durante el desarrollo.
+        format_sql: true
+
+  # Flyway gestiona el esquema. enabled=true es el valor por defecto, lo dejo
+  # explícito para que quede claro que las migraciones corren al arrancar.
+  flyway:
+    enabled: true
+    # baseline-on-migrate: útil si en el futuro conecto a una BD que ya tiene
+    # tablas; permite a Flyway "adoptarla" sin fallar.
+    baseline-on-migrate: true
+
+# Actuator: expongo solo 'health' e 'info' (no todos los endpoints, por seguridad).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# springdoc: dónde queda la documentación. Swagger UI en /swagger-ui.html
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# -----------------------------------------------------------------------------
+# Configuración propia de la aplicación (no de Spring). La leo con @Value o
+# @ConfigurationProperties. Aquí van valores que cambian por entorno.
+# -----------------------------------------------------------------------------
+app:
+  # Configuración del JWT. El 'secret' NUNCA debe ir aquí en prod: se sobreescribe
+  # con una variable de entorno. Este valor es solo un placeholder de desarrollo.
+  jwt:
+    # Clave para firmar el token. En prod viene de APP_JWT_SECRET (Parameter Store).
+    secret: ${APP_JWT_SECRET:cambia-esta-clave-de-desarrollo-min-32-caracteres-1234}
+    # Tiempo de vida del token en milisegundos (aquí 8 horas).
+    expiration-ms: 28800000
+  # Configuración del envío de correo (la consume el EmailGateway).
+  email:
+    # 'simulado' en local/test; 'rest' en prod. Selecciona qué adaptador se usa.
+    modo: simulado
+    remitente: no-responder@reto.com

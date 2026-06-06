@@ -1,0 +1,31 @@
+# =============================================================================
+# PERFIL TEST — pruebas de integración contra una base PostgreSQL local separada
+# =============================================================================
+# Se activa con @ActiveProfiles("test") en las pruebas o
+# --spring.profiles.active=test. Uso una base DISTINTA (reto_test) para no
+# ensuciar ni borrar los datos de desarrollo.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/reto_test
+    username: reto_user
+    password: ${DB_PASSWORD:reto_pass}
+
+  jpa:
+    hibernate:
+      # En test también valido contra el esquema creado por Flyway: las pruebas
+      # de integración deben correr sobre el MISMO esquema que producción.
+      ddl-auto: validate
+    show-sql: false
+
+  flyway:
+    # clean-disabled=false permite limpiar la BD de test entre ejecuciones si lo
+    # necesito (Flyway.clean()). En prod esto SIEMPRE debe estar deshabilitado.
+    clean-disabled: false
+
+# En test el correo siempre es simulado: jamás enviar correos reales en pruebas.
+app:
+  email:
+    modo: simulado
+  cors:
+    allowed-origins: http://localhost:9000
